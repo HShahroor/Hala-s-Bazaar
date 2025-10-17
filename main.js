@@ -5,19 +5,18 @@ const getCategories = async () => {
 
     wrapper.innerHTML = categories.map(cat => `
       <div class="swiper-slide">
-        <div class="p-3 text-center bg-warning rounded category-slide">
+        <div class="p-3 text-center bg-warning rounded shadow-sm category-slide">
           ${cat}
         </div>
       </div>
     `).join('');
 
- document.querySelectorAll('.category-slide').forEach(slide => {
-  slide.addEventListener('click', (e) => {
-    const categoryName = e.target.textContent;
-    window.location.href = `categories.html?cat=${categoryName}`;
-  });
-});
-
+    document.querySelectorAll('.category-slide').forEach(slide => {
+      slide.addEventListener('click', (e) => {
+        const categoryName = e.target.textContent.trim();
+        window.location.href = `categories.html?cat=${categoryName}`;
+      });
+    });
 
     new Swiper('.swiper', {
       slidesPerView: 5,

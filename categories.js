@@ -1,6 +1,10 @@
 const params = new URLSearchParams(window.location.search);
 const category = params.get('cat');
 const titleElement = document.getElementById('category-title');
+if (category) {
+    titleElement.textContent = category.toUpperCase();
+}
+
   
   const getCategoryProducts = async () => {
     const response = await axios.get(`https://dummyjson.com/products/category/${category}`);
