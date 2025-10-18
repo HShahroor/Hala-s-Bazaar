@@ -32,25 +32,36 @@ getCategories()
 
 
 const getproducts = async () => {
-    const response = await axios.get(`https://dummyjson.com/products`);
-    const allProducts = response.data.products;
-    const first9 = allProducts.slice(0, 9);
-    
-    const result = first9.map(product => {
-        return `
-        <div class='col-6 col-md-4 mb-4'>
-        <div class="card">
-            <img src="${product.thumbnail}" class="card-img-top" alt="${product.title}">
-            <div class="card-body">
-              <h5 class="card-title">${product.title}</h5>
-              <p class="card-text">${product.description}</p>
-              <p class="card-text fw-bold text-primary">$${product.price}</p>
-            </div>
-            </div>
-            </div>`;
-    }).join(' ');
-    document.querySelector(".products .row").innerHTML = result;}
+  const response = await axios.get(`https://dummyjson.com/products`);
+  const allProducts = response.data.products;
+  const first9 = allProducts.slice(0, 9);
+
+  const result = first9.map(product => {
+    return `
+      <div class='col-6 col-md-4 mb-4'>
+        <div class="card h-100">
+          <img src="${product.thumbnail}" class="card-img-top" alt="${product.title}">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title text-center">${product.title}</h5>
+            <p class="card-text fw-bold text-danger text-center">$${product.price}</p>
+            <button class="btn btn-warning mt-auto details-btn" data-id="${product.id}">Details</button>
+          </div>
+        </div>
+      </div>`;
+  }).join(' ');
+
+  document.querySelector(".products .row").innerHTML = result;
+
+  document.querySelectorAll('.details-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const productId = e.target.getAttribute('data-id');
+      window.location.href = `details.html?id=${productId}`;
+    });
+  });
+};
+
 getproducts();
+
 
 
 document.getElementById("seeMoreBtn").addEventListener("click", () => {
