@@ -1,46 +1,31 @@
-const productsContainer = document.querySelector(".all-products-row");
-const sortBySelect = document.querySelector(".sort-by-select");
+const allRow = document.querySelector(".all-products-row");
+const sortSelect = document.querySelector(".sort-by-select");
 const orderSelect = document.querySelector(".order-select");
-const applySortBtn = document.querySelector(".apply-sort");
-const paginationContainer = document.querySelector(".pagination-container");
-const searchInput = document.querySelector(".search-input");
+const sortBtn = document.querySelector(".apply-sort");
+const pagContainer = document.querySelector(".pagination-container");
+const search = document.querySelector(".search-input");
 
-let currentPage = 1;
-const limit = 9;
-let products = [];           
-let filteredProducts = [];   
-let sortBy = "";
+let page = 1;
+let limit = 9;
+let allProducts = [];
+let filtered = [];
+let sort = "";
 let order = "";
 
+async function getProducts() {
+  let res = await axios.get("https://dummyjson.com/products?limit=100");
+  allProducts = res.data.products;
+  filtered = allProducts;
+  showProducts(getPage());
+  makePagination();
+}
 
-const loadAllProducts = async () => {
-  let allProducts = [];
-  let skip = 0;
-  const batchLimit = 50; 
-  let total = 0;
+function getPage() {
+  let start = (page - 1) * limit;
+  return filtered.slice(start, start + limit);
+}
 
-  do {
-    const response = await axios.get(`https://dummyjson.com/products?limit=${batchLimit}&skip=${skip}`);
-    allProducts = allProducts.concat(response.data.products);
-    total = response.data.total;
-    skip += batchLimit;
-  } while (allProducts.length < total);
-
-  products = allProducts;
-  filteredProducts = [...products];
-
-  displayProducts(getPageProducts());
-  createPagination();
-};
-
-
-const getPageProducts = () => {
-  const start = (currentPage - 1) * limit;
-  return filteredProducts.slice(start, start + limit);
-};
-
-
-const displayProducts = (list) => {
+function showProducts(list) {
   const result = list.map(product => {
     return `
       <div class='col-6 col-md-4 mb-4'>
@@ -53,104 +38,97 @@ const displayProducts = (list) => {
           </div>
         </div>
       </div>`;
-  }).join("");
+  }).join(' ');
 
-  productsContainer.innerHTML = result;
+  allRow.innerHTML = result;
 
   document.querySelectorAll(".details-btn").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      const productId = e.target.getAttribute("data-id");
-      window.location.href = `details.html?id=${productId}`;
-    });
+    btn.onclick = e => {
+      let id = e.target.getAttribute("data-id");
+      window.location.href = `details.html?id=${id}`;
+    };
   });
-};
+}
 
+function makePagination() {
+  let totalPages = Math.ceil(filtered.length / limit);
+  pagContainer.innerHTML = "";
 
-const createPagination = () => {
-  const totalPages = Math.ceil(filteredProducts.length / limit);
-  paginationContainer.innerHTML = "";
-
-  const prevLi = document.createElement("li");
-  prevLi.classList.add("page-item");
-  prevLi.innerHTML = `<a class="page-link" href="#">Prev</a>`;
-  prevLi.classList.toggle("disabled", currentPage === 1);
-  prevLi.addEventListener("click", e => {
+  let prev = document.createElement("li");
+  prev.classList.add("page-item");
+  prev.innerHTML = `<a class="page-link" href="#">Prev</a>`;
+  if (page == 1) prev.classList.add("disabled");
+  prev.onclick = e => {
     e.preventDefault();
-    if (currentPage > 1) {
-      currentPage--;
-      displayProducts(getPageProducts());
-      createPagination();
+    if (page > 1) {
+      page--;
+      showProducts(getPage());
+      makePagination();
     }
-  });
-  paginationContainer.appendChild(prevLi);
+  };
+  pagContainer.appendChild(prev);
 
-  let startPage = Math.max(1, currentPage - 1);
-  let endPage = Math.min(totalPages, currentPage + 1);
-  if (currentPage === 1 && totalPages > 2) endPage = 3;
-  if (currentPage === totalPages && totalPages > 2) startPage = totalPages - 2;
-
-  for (let i = startPage; i <= endPage; i++) {
-    const li = document.createElement("li");
+  for (let i = 1; i <= totalPages; i++) {
+    let li = document.createElement("li");
     li.classList.add("page-item");
-    if (i === currentPage) li.classList.add("active");
+    if (i == page) li.classList.add("active");
     li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-    li.addEventListener("click", e => {
+    li.onclick = e => {
       e.preventDefault();
-      currentPage = i;
-      displayProducts(getPageProducts());
-      createPagination();
-    });
-    paginationContainer.appendChild(li);
+      page = i;
+      showProducts(getPage());
+      makePagination();
+    };
+    pagContainer.appendChild(li);
   }
 
-  const nextLi = document.createElement("li");
-  nextLi.classList.add("page-item");
-  nextLi.innerHTML = `<a class="page-link" href="#">Next</a>`;
-  nextLi.classList.toggle("disabled", currentPage === totalPages);
-  nextLi.addEventListener("click", e => {
+  let next = document.createElement("li");
+  next.classList.add("page-item");
+  next.innerHTML = `<a class="page-link" href="#">Next</a>`;
+  if (page == totalPages) next.classList.add("disabled");
+  next.onclick = e => {
     e.preventDefault();
-    if (currentPage < totalPages) {
-      currentPage++;
-      displayProducts(getPageProducts());
-      createPagination();
+    if (page < totalPages) {
+      page++;
+      showProducts(getPage());
+      makePagination();
     }
-  });
-  paginationContainer.appendChild(nextLi);
-};
+  };
+  pagContainer.appendChild(next);
+}
 
-
-searchInput.addEventListener("input", () => {
-  const text = searchInput.value.toLowerCase().trim();
-  filteredProducts = products.filter(p =>
-    p.title.toLowerCase().includes(text) ||
-    p.description.toLowerCase().includes(text)
+search.addEventListener("input", () => {
+  let txt = search.value.toLowerCase().trim();
+  filtered = allProducts.filter(p =>
+    p.title.toLowerCase().includes(txt) ||
+    p.description.toLowerCase().includes(txt)
   );
-  currentPage = 1;
-  displayProducts(getPageProducts());
-  createPagination();
+  page = 1;
+  showProducts(getPage());
+  makePagination();
 });
 
-
-applySortBtn.addEventListener("click", () => {
-  sortBy = sortBySelect.value;
+sortBtn.addEventListener("click", () => {
+  sort = sortSelect.value;
   order = orderSelect.value;
-  sortProducts();
-  currentPage = 1;
-  displayProducts(getPageProducts());
-  createPagination();
+  doSort();
+  page = 1;
+  showProducts(getPage());
+  makePagination();
 });
 
-const sortProducts = () => {
-  if (sortBy && order) {
-    filteredProducts.sort((a, b) => {
-      if (sortBy === "title") {
-        return order === "asc" ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title);
-      } else if (sortBy === "price") {
-        return order === "asc" ? a.price - b.price : b.price - a.price;
+function doSort() {
+  if (sort && order) {
+    filtered.sort((a, b) => {
+      if (sort == "title") {
+        return order == "asc"
+          ? a.title.localeCompare(b.title)
+          : b.title.localeCompare(a.title);
+      } else if (sort == "price") {
+        return order == "asc" ? a.price - b.price : b.price - a.price;
       }
     });
   }
-};
+}
 
-
-loadAllProducts();
+getProducts();
