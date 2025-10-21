@@ -1,7 +1,8 @@
+const loader = document.querySelector(".loader")
 const getDetails = async () => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
-
+loader.classList.remove('d-none');
         const response = await axios.get(`https://dummyjson.com/products/${id}`);
         const data = response.data;
 
@@ -17,6 +18,7 @@ const getDetails = async () => {
     `;
 
         document.querySelector(".detail").innerHTML = result;
+        loader.classList.add('d-none');
 };
 
 getDetails();

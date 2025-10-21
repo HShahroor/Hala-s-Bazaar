@@ -1,3 +1,4 @@
+const loader = document.querySelector(".loader")
 const allRow = document.querySelector(".all-products-row");
 const sortSelect = document.querySelector(".sort-by-select");
 const orderSelect = document.querySelector(".order-select");
@@ -13,11 +14,20 @@ let sort = "";
 let order = "";
 
 async function getProducts() {
-  let res = await axios.get("https://dummyjson.com/products?limit=100");
-  allProducts = res.data.products;
+  loader.classList.remove('d-none');
+  let all = [];
+  let skip = 0;
+  let res;
+  do {
+    res = await axios.get(`https://dummyjson.com/products?limit=100&skip=${skip}`);
+    all = all.concat(res.data.products);
+    skip += 100;
+  } while(all.length < res.data.total);
+  allProducts = all;
   filtered = allProducts;
   showProducts(getPage());
   makePagination();
+  loader.classList.add('d-none');
 }
 
 function getPage() {
@@ -28,13 +38,14 @@ function getPage() {
 function showProducts(list) {
   const result = list.map(product => {
     return `
-      <div class='col-6 col-md-4 mb-4'>
+      <div class='product-card col-6 col-md-4 mb-4'>
         <div class="card h-100">
           <img src="${product.thumbnail}" class="card-img-top" alt="${product.title}">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title text-center">${product.title}</h5>
             <p class="card-text fw-bold text-danger text-center">$${product.price}</p>
             <button class="btn btn-warning mt-auto details-btn" data-id="${product.id}">Details</button>
+            <button class="btn mt-2 btn-danger delete-btn" data-id="${product.id}">Delete</button>
           </div>
         </div>
       </div>`;
@@ -47,6 +58,23 @@ function showProducts(list) {
       let id = e.target.getAttribute("data-id");
       window.location.href = `details.html?id=${id}`;
     };
+  });
+
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const productId = e.target.getAttribute('data-id');
+      Swal.fire({
+        title: "Do you want to delete this product?",
+        showCancelButton: true,
+        confirmButtonText: "Delete",
+        icon: "warning"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire("Deleted!", "Product has been deleted.", "success");
+          e.target.closest('.product-card').remove();
+        }
+      });
+    });
   });
 }
 
@@ -68,7 +96,8 @@ function makePagination() {
   };
   pagContainer.appendChild(prev);
 
-  for (let i = 1; i <= totalPages; i++) {
+  for (let i = page - 1; i <= page + 1; i++) {
+    if (i < 1 || i > totalPages) continue;
     let li = document.createElement("li");
     li.classList.add("page-item");
     if (i == page) li.classList.add("active");
